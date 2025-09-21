@@ -1,0 +1,52 @@
+# Version of the Docker Compose file format
+# Version 3.8 supports all Docker features as of late 2021
+version: '3.8'
+
+# Services define the containers that make up the application
+services:
+  # Web service - runs the Django application
+  web:
+    # Build the Docker image from the Dockerfile in the current directory
+    build: .
+    # Command to run when the container starts
+    command: python manage.py runserver 0.0.0.0:8000
+    # Mount the current directory to /app in the container
+    # This allows code changes to be reflected immediately without rebuilding
+    volumes:
+      - .:/app
+    # Map port 8000 on the host to port 8000 in the container
+    ports:
+      - "8000:8000"
+    # Ensure the database container starts before the web container
+    depends_on:
+      - db
+    # Environment variables for the Django application
+    environment:
+      - DEBUG=True  # Enable debug mode for development
+      - DB_NAME=employee_db  # Database name
+      - DB_USER=postgres  # Database username
+      - DB_PASSWORD=postgres  # Database password
+      - DB_HOST=db  # Database service name
+      - DB_PORT=5432  # Database port
+
+  # Database service - runs PostgreSQL
+  db:
+    # Use the official PostgreSQL 15 image
+    image: postgres:15
+    # Persist PostgreSQL data in a named volume
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    # Environment variables for PostgreSQL initialization
+    environment:
+      - POSTGRES_DB=employee_db  # Database name to create
+      - POSTGRES_USER=postgres  # Superuser username
+      - POSTGRES_PASSWORD=postgres  # Superuser password
+    # Map port 5432 on the host to port 5432 in the container
+    # This allows external database tools to connect
+    ports:
+      - "5432:5432"
+
+# Named volumes for persistent storage
+volumes:
+  # Volume for PostgreSQL data persistence
+  postgres_data:

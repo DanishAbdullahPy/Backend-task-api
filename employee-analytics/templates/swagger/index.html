@@ -1,0 +1,131 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Employee Analytics API - Swagger Documentation</title>
+    <link rel="stylesheet" type="text/css" href="https://unpkg.com/swagger-ui-dist@4.15.5/swagger-ui.css" />
+    <style>
+        html {
+            box-sizing: border-box;
+            overflow: -moz-scrollbars-vertical;
+            overflow-y: scroll;
+        }
+        *, *:before, *:after {
+            box-sizing: inherit;
+        }
+        body {
+            margin: 0;
+            background: #fafafa;
+        }
+        .header {
+            background-color: #3f51b5;
+            padding: 14px;
+            color: white;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 28px;
+        }
+        .header p {
+            margin: 5px 0 0;
+            font-size: 16px;
+            opacity: 0.9;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Employee Analytics API</h1>
+        <p>Comprehensive API for employee data management and analytics</p>
+    </div>
+    <div id="swagger-ui"></div>
+    <script src="https://unpkg.com/swagger-ui-dist@4.15.5/swagger-ui-bundle.js"></script>
+    <script src="https://unpkg.com/swagger-ui-dist@4.15.5/swagger-ui-standalone-preset.js"></script>
+    <script>
+        window.onload = function() {
+            // Get the authentication token from localStorage
+            const token = localStorage.getItem('auth_token');
+
+            // Build the Swagger UI
+            const ui = SwaggerUIBundle({
+                url: "/swagger/?format=openapi",
+                dom_id: '#swagger-ui',
+                deepLinking: true,
+                presets: [
+                    SwaggerUIBundle.presets.apis,
+                    SwaggerUIStandalonePreset
+                ],
+                plugins: [
+                    SwaggerUIBundle.plugins.DownloadUrl
+                ],
+                layout: "StandaloneLayout",
+                defaultModelsExpandDepth: 1,
+                displayRequestDuration: true,
+                docExpansion: "none",
+                filter: true,
+                showExtensions: true,
+                showCommonExtensions: true,
+                supportedSubmitMethods: ['get', 'post', 'put', 'delete', 'patch'],
+                onComplete: function() {
+                    // Add authentication token to requests if available
+                    if (token) {
+                        ui.preauthorizeApiKey("Token", `Token ${token}`);
+                    }
+                }
+            });
+
+            // Add event listener for login form
+            const loginForm = document.getElementById('login-form');
+            if (loginForm) {
+                loginForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+
+                    const username = document.getElementById('username').value;
+                    const password = document.getElementById('password').value;
+
+                    // Make login request
+                    fetch('/api/auth/login/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            username: username,
+                            password: password
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.token) {
+                            // Save token to localStorage
+                            localStorage.setItem('auth_token', data.token);
+
+                            // Reload Swagger UI with new token
+                            location.reload();
+                        } else {
+                            alert('Login failed: ' + (data.error || 'Invalid credentials'));
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error during login:', error);
+                        alert('Login failed: An error occurred');
+                    });
+                });
+            }
+
+            // Add logout functionality
+            const logoutButton = document.getElementById('logout-button');
+            if (logoutButton) {
+                logoutButton.addEventListener('click', function() {
+                    localStorage.removeItem('auth_token');
+                    location.reload();
+                });
+            }
+        };
+    </script>
+</body>
+</html>
